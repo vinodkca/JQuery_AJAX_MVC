@@ -1,0 +1,180 @@
+﻿@model jQuery_AJAX_MVC.Models.PersonModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index-4788250000121443</title>
+</head>
+<style>
+    body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .inputColumn {
+        padding-left: 9px;
+        height: 30px;
+    }
+
+    #expDateInput {
+        width: 25px;
+    }
+
+    #cvvInput {
+        width: 20px;
+    }
+
+    .error {
+        color: red;
+        border-color: red;
+    }
+</style>
+
+<body>
+
+    <h4>Hosted AJAX iFrame Tokenizer Validation Example1</h4>
+    This page shows how to use the Hosted iFrame tokenizer with client side validation. View page source to see the code.<br />
+    After the credit card number is entered by the user, the iFrame validates the input and will send back an error
+    event to the parent page if validation fails. If validation succeeds, the account number will be tokenized and
+    returned to the parent page in an event. The submit button will validate the fields and display the token if all fields are valid.
+    <br /><br />
+    Please note: Although this example points to directly to an iframe HTML file only, in actual<br />
+    implementation the src attribute must point to the same file but also include the hosted URL location.<br />
+    <br />
+    <i>Example: src="fts.cardconnect.com/itoke/ajax-tokenizer.html?css=.error{color:red;border-color:red;}&invalidinputevent=true"</i><br />
+    <br />
+    @*<form name="order" method="post" onsubmit="return validateForm();">*@
+    <form name="order" method="post">
+        <table>
+            <tr>
+                <td>Card number: </td>
+                <td>
+                    <iframe id="tokenframe" name="tokenframe" frameborder="0" scrolling="no" width="170" height="30"></iframe>
+                </td>
+                <td>
+                    <div id="cardNumberValidationError" class="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>Expiration Date: </td>
+                <td class="inputColumn">
+                    <input id="expDateInput" type="text" maxlength="4" />
+                </td>
+                <td>
+                    <div id="expDateValidationError" class="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>CVV: </td>
+                <td class="inputColumn">
+                    <input id="cvvInput" type="text" maxlength="4" />
+                </td>
+                <td>
+                    <div id="cvvValidationError" class="error" />
+                </td>
+            </tr>
+        </table>
+        <br />
+        <input type="hidden" name="token" id="token">
+        <input type="submit" value="Submit" onclick="javascript:sendToServer();"><br />
+        <input type="button" value="Clear Form" onclick="javascript:clearForm();" />
+    </form>
+</body>
+<script src="~/Scripts/jquery-1.10.2.js"></script>
+<script language="JavaScript">
+    var tokenError = '';
+
+    function loadIframe() {
+        document.getElementById("tokenframe").src = "https://fts.cardconnect.com:6443/itoke/ajax-tokenizer.html?css=%2Eerror{color:%20red;}";
+    }
+
+    function validateForm() {
+        var valid = true;
+
+        if (tokenError !== undefined) {
+            document.getElementById("cardNumberValidationError").innerHTML = "* " + tokenError;
+            valid = false;
+        } else if (document.getElementById('token').value === '') {
+            document.getElementById("cardNumberValidationError").innerHTML = "* Card number is required";
+            valid = false;
+        }
+
+        if (document.getElementById('expDateInput').value === '') {
+            document.getElementById("expDateValidationError").innerHTML = "* Expiration date is required";
+            valid = false;
+        }
+
+        if (document.getElementById('cvvInput').value === '') {
+            document.getElementById("cvvValidationError").innerHTML = "* CVV is required";
+            valid = false;
+        }
+
+        if (valid) {
+            alert("Token value: " + document.getElementById('token').value);
+        }
+
+
+        return false;
+    }
+
+    function clearForm() {
+        loadIframe();
+        document.getElementById("cardNumberValidationError").innerHTML = '';
+        document.getElementById('expDateInput').value = '';
+        document.getElementById('expDateValidationError').innerHTML = '';
+        document.getElementById('cvvInput').value = '';
+        document.getElementById("cvvValidationError").innerHTML = '';
+    }
+
+    window.addEventListener('message', function (event) {
+        console.log("received message: " + event.data);
+        var token = JSON.parse(event.data);
+        if (token.validationError === undefined) {
+            document.getElementById("cardNumberValidationError").innerHTML = '';
+        }
+        tokenError = token.validationError;
+        document.getElementById('token').value = token.message;
+        
+    }, false);
+
+    loadIframe();
+
+    sendToServer = function () {
+       // validateForm();
+
+        var employee = new Object();  
+        employee.CCToken = document.getElementById('token').value;
+        employee.ExpDate = document.getElementById('expDateInput').value;
+        employee.CCV = document.getElementById('cvvInput').value;
+        if (employee != null) {  
+            $.ajax({  
+                type: "POST",  
+                url: "/Home/AjaxPostCall",  
+                data: JSON.stringify(employee),  
+                contentType: "application/json; charset=utf-8",  
+                dataType: "json",  
+                success: function(response) {  
+                    if (response != null) {  
+                        alert("CC : " + response.CCToken + ", ExpDate : " + response.ExpDate + ", CCV :" + response.CCV);
+                    } else {  
+                        alert("Something went wrong");  
+                    }  
+                },  
+                failure: function(response) {  
+                    alert(response.responseText);  
+                },  
+                error: function(response) {  
+                    alert(response.responseText);  
+                }  
+            });  
+        }  
+    };  
+
+</script>
+</html>
+
